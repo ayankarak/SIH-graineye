@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SandSight: Automated Sand Grain Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* * ==============================================
+         * Theme Management with CSS Variables
+         * ==============================================
+         * Using CSS variables for theming makes the code cleaner, 
+         * easier to maintain, and more efficient than numerous
+         * override classes.
+        */
+        :root {
+            /* Light Theme Palette */
+            --bg-light: linear-gradient(to bottom right, #e0e7ff, #ffffff);
+            --text-light: #1f2937;
+            --text-muted-light: #4b5563;
+            --primary-light: #000080; /* Navy Blue */
+            --accent-light: #FF9900; /* Orange */
+            --header-bg-light: rgba(224, 231, 255, 0.8);
+            --card-bg-light: #ffffff;
+            --card-bg-alt-light: #f3f4f6;
+            --border-light: #000080;
+            --grid-color-light: #d1d5db;
+
+            /* Dark Theme Palette */
+            --bg-dark: linear-gradient(-45deg, #001f3f, #003366, #1a2a3a);
+            --text-dark: #e5e7eb;
+            --text-muted-dark: #9ca3af;
+            --primary-dark: #FF9900; /* Orange */
+            --accent-dark: #fcd34d; /* Lighter Orange */
+            --header-bg-dark: rgba(0, 51, 102, 0.8);
+            --card-bg-dark: rgba(26, 32, 44, 0.5);
+            --card-bg-alt-dark: rgba(45, 55, 72, 0.5);
+            --border-dark: #9ca3af;
+            --grid-color-dark: #4b5563;
+        }
+
+        /* Applying Theme Variables */
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.5s, color 0.5s;
+        }
+
+        .dark-mode {
+            --bg-gradient: var(--bg-dark);
+            --text-primary: var(--text-dark);
+            --text-muted: var(--text-muted-dark);
+            --primary-color: var(--primary-dark);
+            --accent-color: var(--accent-dark);
+            --header-bg: var(--header-bg-dark);
+            --card-bg: var(--card-bg-dark);
+            --card-bg-alt: var(--card-bg-alt-dark);
+            --border-color: var(--border-dark);
+            --grid-color: var(--grid-color-dark);
+        }
+
+        .light-mode {
+            --bg-gradient: var(--bg-light);
+            --text-primary: var(--text-light);
+            --text-muted: var(--text-muted-light);
+            --primary-color: var(--primary-light);
+            --accent-color: var(--accent-light);
+            --header-bg: var(--header-bg-light);
+            --card-bg: var(--card-bg-light);
+            --card-bg-alt: var(--card-bg-alt-light);
+            --border-color: var(--border-light);
+            --grid-color: var(--grid-color-light);
+        }
+
+        body {
+            background: var(--bg-gradient);
+            background-size: 400% 400%;
+            animation: gradient-shift 15s ease infinite;
+            color: var(--text-primary);
+        }
+
+        header, footer {
+            background-color: var(--header-bg);
+            backdrop-filter: blur(10px);
+        }
+        
+        .card {
+            background-color: var(--card-bg);
+            color: var(--text-primary);
+        }
+        
+        .card-alt {
+            background-color: var(--card-bg-alt);
+            color: var(--text-primary);
+        }
+
+        .text-muted { color: var(--text-muted); }
+        .text-primary { color: var(--primary-color); }
+        .bg-primary { background-color: var(--primary-color); }
+        .border-primary { border-color: var(--primary-color); }
+
+        @keyframes gradient-shift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Component Styling */
+        .hero-bg {
+            background-image: url('https://placehold.co/2000x1200/000000/FF9900?text=SandSight');
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .flowchart-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .flowchart-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1;
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin: auto;
+            height: 300px;
+        }
+        
+        @media (min-width: 768px) {
+            .chart-container { height: 350px; }
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .tab-button.active {
+            background-color: var(--primary-color);
+            color: var(--bg-gradient); /* Invert color for contrast */
+            font-weight: 700;
+        }
+        .light-mode .tab-button.active { color: white; }
+        .dark-mode .tab-button.active { color: black; }
+
+        .file-upload-container {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .file-upload-container:hover, .file-upload-container.drag-over {
+            background-color: rgba(45, 55, 72, 0.2);
+            border-color: var(--accent-color);
+        }
+
+        #loadingIndicator > div {
+            border: 4px solid rgba(128, 128, 128, 0.2);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .home-section-animated {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInFromTop 1s ease-out forwards;
+        }
+        @keyframes fadeInFromTop {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #messageBox .modal-content {
+            background-color: var(--card-bg);
+            color: var(--text-primary);
+        }
+        
+        /* Refined Theme Toggle Button Animation */
+        #themeToggle {
+            position: relative;
+            width: 3rem;
+            height: 3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #themeToggle .icon {
+            position: absolute;
+            transition: transform 0.4s ease-in-out, opacity 0.4s ease-in-out;
+        }
+        .dark-mode #sunIcon { transform: rotate(-90deg) scale(0); opacity: 0; }
+        .dark-mode #moonIcon { transform: rotate(0) scale(1); opacity: 1; }
+        .light-mode #sunIcon { transform: rotate(0) scale(1); opacity: 1; }
+        .light-mode #moonIcon { transform: rotate(90deg) scale(0); opacity: 0; }
+
+    </style>
+</head>
+<body class="dark-mode">
+
+    <!-- Custom Modal/Message Box -->
+    <div id="messageBox" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
+        <div class="modal-content rounded-lg shadow-xl p-6 w-96 max-w-full m-4 text-center">
+            <h3 id="messageTitle" class="text-2xl font-bold text-primary mb-4"></h3>
+            <p id="messageText" class="text-muted mb-6"></p>
+            <button id="messageClose" class="bg-primary text-white font-bold py-2 px-6 rounded-full hover:bg-opacity-80 transition-colors duration-200">OK</button>
+        </div>
+    </div>
+    
+    <header class="py-4 px-4 sticky top-0 z-40">
+        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <img id="teamLogo" src="https://placehold.co/40x40/transparent/FF9900?text=GE" alt="Graineye Team Logo" class="h-10 w-10 rounded-full">
+                <h1 class="text-2xl font-bold">SandSight</h1>
+            </div>
+            <nav class="mt-4 md:mt-0 flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-4">
+                <ul class="flex flex-wrap justify-center text-lg font-semibold space-x-2 md:space-x-4">
+                    <li><button class="tab-button px-4 py-2 rounded-full hover:bg-primary hover:text-white transition-all duration-300" data-target="home">Home</button></li>
+                    <li><button class="tab-button px-4 py-2 rounded-full hover:bg-primary hover:text-white transition-all duration-300" data-target="problem">Problem</button></li>
+                    <li><button class="tab-button px-4 py-2 rounded-full hover:bg-primary hover:text-white transition-all duration-300" data-target="solution">Solution</button></li>
+                    <li><button class="tab-button px-4 py-2 rounded-full hover:bg-primary hover:text-white transition-all duration-300" data-target="analysis">Analysis</button></li>
+                    <li><button class="tab-button px-4 py-2 rounded-full hover:bg-primary hover:text-white transition-all duration-300" data-target="data-analysis">Sample Data</button></li>
+                    <li><button class="tab-button px-4 py-2 rounded-full hover:bg-primary hover:text-white transition-all duration-300" data-target="impact">Impact</button></li>
+                    <li><button class="tab-button px-4 py-2 rounded-full hover:bg-primary hover:text-white transition-all duration-300" data-target="team">Team</button></li>
+                    <li><button class="tab-button px-4 py-2 rounded-full hover:bg-primary hover:text-white transition-all duration-300" data-target="contact">Contact</button></li>
+                </ul>
+                <button id="themeToggle" class="bg-gray-700 text-white p-2 rounded-full transition-colors duration-300" aria-label="Toggle theme">
+                    <svg id="sunIcon" class="icon sun-icon h-7 w-7" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    <svg id="moonIcon" class="icon moon-icon h-7 w-7" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-8">
+        <p id="userIdDisplay" class="text-xs text-center text-muted mb-4 p-2 rounded-md card-alt"></p>
+        
+        <section id="home" class="tab-content mb-16 rounded-lg shadow-xl overflow-hidden home-section-animated">
+            <div class="hero-bg">
+                <div class="bg-black bg-opacity-60 py-20 px-4 text-center text-white">
+                    <h1 class="text-5xl md:text-6xl font-bold mb-4">SandSight: Automated Beach Sand Grain Size Mapping System</h1>
+                    <p class="text-xl md:text-2xl max-w-3xl mx-auto">The Future of Coastal Environmental Analysis</p>
+                    <p class="mt-4 text-lg">Team Name: GRAINEYE </p>
+                    <p class="text-sm">Smart India Hackathon – Problem Statement 37</p>
+                    <p class="text-sm">Development of a low-cost camera-based automated beach sand grain size mapping system</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- All subsequent section content cards are updated to use the .card class for theme consistency -->
+        <section id="problem" class="tab-content mb-16">
+            <div class="text-center mb-10">
+                <h2 class="text-4xl font-bold text-primary">The Unseen Challenge</h2>
+                <p class="mt-2 text-lg text-muted max-w-2xl mx-auto">Why does sand grain size matter?</p>
+            </div>
+            
+            <div class="card rounded-lg shadow-md p-6 mb-8 flex flex-col md:flex-row items-center gap-8 transition-all duration-300 hover:shadow-xl">
+                <div class="w-full md:w-1/2">
+                    <img src="istockphoto-1299945115-612x612.jpg" alt="A road collapsing into the sea due to severe coastal erosion" class="rounded-lg shadow-lg w-full">
+                </div>
+                <div class="w-full md:w-1/2">
+                    <div class="text-4xl mb-4 text-center md:text-left">🌊</div>
+                    <h3 class="text-xl font-semibold mb-2 text-center md:text-left">Coastal Erosion</h3>
+                    <p class="text-muted text-center md:text-left">Sand type directly impacts beach resilience. Coarse grains provide better natural protection against wave energy and erosion, while fine grains are more susceptible to being washed away. Monitoring grain size is crucial for effective coastal management and for assessing the health of our shorelines.</p>
+                </div>
+            </div>
+
+            <div class="card rounded-lg shadow-md p-6 mb-8 flex flex-col md:flex-row items-center gap-8 transition-all duration-300 hover:shadow-xl">
+                <div class="w-full md:w-1/2 order-first md:order-last">
+                    <img src="1722394315-doc_itv_02_physical_marine_habitats.jpg" alt="Illustration of different marine habitats like rocky reef, gravel, sand, and mud" class="rounded-lg shadow-lg w-full">
+                </div>
+                <div class="w-full md:w-1/2 order-last md:order-first">
+                    <div class="text-4xl mb-4 text-center md:text-right">🐠</div>
+                    <h3 class="text-xl font-semibold mb-2 text-center md:text-right">Marine Habitats</h3>
+                    <p class="text-muted text-center md:text-right">Sand grain size is critical for the tiny organisms that form the base of the marine food web. Different grain sizes create distinct habitats for various invertebrates, which in turn support larger marine life. An accurate analysis helps conservationists understand and protect these fragile ecosystems.</p>
+                </div>
+            </div>
+
+            <div class="card rounded-lg shadow-md p-6 flex flex-col md:flex-row items-center gap-8 transition-all duration-300 hover:shadow-xl">
+                <div class="w-full md:w-1/2">
+                    <img src="Blog-poster-3-min (1).jpg" alt="Different types of sand used in construction" class="rounded-lg shadow-lg w-full">
+                </div>
+                <div class="w-full md:w-1/2">
+                    <div class="text-4xl mb-4 text-center md:text-left">🏗️</div>
+                    <h3 class="text-xl font-semibold mb-2 text-center md:text-left">Construction Quality</h3>
+                    <p class="text-muted text-center md:text-left">For building and infrastructure projects, the physical properties of sand—including its grain size, shape, and sorting—are essential for creating durable concrete and mortar. Our system provides a quick and reliable way to assess sand quality on-site, ensuring materials meet industry standards and reduce costly project delays.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="solution" class="tab-content mb-16">
+             <div class="text-center mb-10">
+                <h2 class="text-4xl font-bold text-primary">The Solution: Affordable and Accurate</h2>
+                <p class="mt-2 text-lg text-muted max-w-2xl mx-auto">A camera-based system that provides instant, on-site analysis.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center card p-8 rounded-lg shadow-lg">
+                <div>
+                    <img src="WhatsApp Image 2025-09-17 at 15.18.05_43e42464.jpg" alt="Conceptual drawing of the SandSight prototype" class="rounded-lg shadow-lg w-full">
+                </div>
+                <div>
+                    <h3 class="text-2xl font-semibold mb-2">Hardware</h3>
+                    <ul class="list-disc list-inside space-y-2 text-muted">
+                        <li>Low-cost camera module (Raspberry Pi/Smartphone/USB cam).</li>
+                        <li>Portable stand and illumination.</li>
+                    </ul>
+                    <h3 class="text-2xl font-semibold mt-6 mb-2">Software</h3>
+                    <ul class="list-disc list-inside space-y-2 text-muted">
+                        <li>OpenCV + Python ML Pipeline.</li>
+                        <li>Automated grain detection and size measurement.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="mt-16 card rounded-lg shadow-md p-8 transition-all duration-300 hover:shadow-xl">
+                <div class="text-center mb-10">
+                    <h2 class="text-4xl font-bold text-primary">From Photo to Data in Seconds</h2>
+                    <p class="mt-2 text-lg text-muted max-w-2xl mx-auto">A simple, four-step process.</p>
+                </div>
+                <div class="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-0">
+                    <div class="flowchart-step flex-1 px-2">
+                        <div class="bg-primary text-white rounded-full h-20 w-20 flex items-center justify-center text-4xl mb-3">📷</div>
+                        <h4 class="font-semibold text-lg">1. Capture</h4>
+                        <p class="text-sm text-muted">Take a photo.</p>
+                    </div>
+                    <div class="flowchart-arrow hidden md:flex">→</div>
+                    <div class="text-3xl md:hidden my-4 text-primary">↓</div>
+                    <div class="flowchart-step flex-1 px-2">
+                        <div class="bg-primary text-white rounded-full h-20 w-20 flex items-center justify-center text-4xl mb-3">⚙️</div>
+                        <h4 class="font-semibold text-lg">2. Process</h4>
+                        <p class="text-sm text-muted">Image cleanup.</p>
+                    </div>
+                    <div class="flowchart-arrow hidden md:flex">→</div>
+                    <div class="text-3xl md:hidden my-4 text-primary">↓</div>
+                    <div class="flowchart-step flex-1 px-2">
+                        <div class="bg-primary text-white rounded-full h-20 w-20 flex items-center justify-center text-4xl mb-3">🔍</div>
+                        <h4 class="font-semibold text-lg">3. Analyze</h4>
+                        <p class="text-sm text-muted">Particle detection.</p>
+                    </div>
+                    <div class="flowchart-arrow hidden md:flex">→</div>
+                    <div class="text-3xl md:hidden my-4 text-primary">↓</div>
+                    <div class="flowchart-step flex-1 px-2">
+                        <div class="bg-primary text-white rounded-full h-20 w-20 flex items-center justify-center text-4xl mb-3">📊</div>
+                        <h4 class="font-semibold text-lg">4. Visualize</h4>
+                        <p class="text-sm text-muted">Generate a report.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Added AI - ML Flowchart Section -->
+            <div class="mt-16 card rounded-lg shadow-md p-8 transition-all duration-300 hover:shadow-xl">
+                <div class="text-center mb-10">
+                    <h2 class="text-4xl font-bold text-primary">AI - ML Flowchart</h2>
+                    <p class="mt-2 text-lg text-muted max-w-2xl mx-auto">The underlying model for our grain analysis.</p>
+                </div>
+                <div class="flex justify-center">
+                    <img src="aniket_ml_flowchart.png" alt="AI ML Flowchart for sand grain analysis" class="rounded-lg shadow-lg w-full max-w-4xl">
+                </div>
+            </div>
+
+        </section>
+
+        <section id="analysis" class="tab-content mb-16">
+            <div class="text-center mb-10">
+                <h2 class="text-4xl font-bold text-primary">Perform a Live Analysis</h2>
+                <p class="mt-2 text-lg text-muted max-w-2xl mx-auto">Upload an image of sand to see a real-time grain size analysis.</p>
+            </div>
+            
+            <div class="card rounded-lg shadow-md p-8 flex flex-col items-center transition-all duration-300 hover:shadow-xl">
+                <div id="fileUploadContainer" class="w-full md:w-2/3 lg:w-1/2 file-upload-container">
+                    <label for="sandImageUpload" class="block cursor-pointer">
+                        <input type="file" id="sandImageUpload" accept="image/*" class="hidden">
+                        <div class="p-6">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                            </svg>
+                            <p class="mt-2 text-sm text-muted">Drag and drop an image here, or click to select a file.</p>
+                            <p id="fileName" class="text-xs mt-2 italic text-muted"></p>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="mt-8 flex items-center space-x-4">
+                    <button id="analyzeBtn" class="bg-primary text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-opacity-80 transition-colors duration-300">
+                        Analyze Image ✨
+                    </button>
+                    <div id="loadingIndicator" class="hidden">
+                         <div></div> <!-- The spinner will be styled via CSS -->
+                    </div>
+                </div>
+
+                <div class="mt-12 w-full">
+                    <h3 class="text-2xl font-bold mb-4 text-primary text-center">Past Analyses (Live Feed)</h3>
+                    <div id="pastAnalysesContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Analyses will be dynamically loaded here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="data-analysis" class="tab-content mb-16">
+             <div class="text-center mb-10">
+                <h2 class="text-4xl font-bold text-primary">Unlocking Granular Insights</h2>
+                <p class="mt-2 text-lg text-muted max-w-2xl mx-auto">This is what our system delivers: a precise environmental signature for each location.</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="card rounded-lg shadow-md p-6 transition-all duration-300 hover:shadow-xl">
+                    <h3 class="text-xl font-semibold mb-1 text-center">Goa Beach, India - Histogram</h3>
+                    <p class="text-sm text-muted text-center mb-4">A typical distribution of finer sand, common for calm beaches.</p>
+                    <div class="chart-container"><canvas id="grainSizeHistogramGoa"></canvas></div>
+                </div>
+                <div class="card rounded-lg shadow-md p-6 transition-all duration-300 hover:shadow-xl">
+                    <h3 class="text-xl font-semibold mb-1 text-center">Goa Beach, India - Pie Chart</h3>
+                    <p class="text-sm text-muted text-center mb-4">Visualizing the same data as a proportional pie chart.</p>
+                    <div class="chart-container"><canvas id="grainSizePieGoa"></canvas></div>
+                </div>
+                <div class="card rounded-lg shadow-md p-6 transition-all duration-300 hover:shadow-xl">
+                    <h3 class="text-xl font-semibold mb-1 text-center">Miami Beach, USA - Histogram</h3>
+                    <p class="text-sm text-muted text-center mb-4">A mix of fine and medium grains, suitable for recreation.</p>
+                    <div class="chart-container"><canvas id="grainSizeHistogramMiami"></canvas></div>
+                </div>
+                <div class="card rounded-lg shadow-md p-6 transition-all duration-300 hover:shadow-xl">
+                    <h3 class="text-xl font-semibold mb-1 text-center">Miami Beach, USA - Pie Chart</h3>
+                    <p class="text-sm text-muted text-center mb-4">Visualizing the same data as a proportional pie chart.</p>
+                    <div class="chart-container"><canvas id="grainSizePieMiami"></canvas></div>
+                </div>
+                <div class="card rounded-lg shadow-md p-6 transition-all duration-300 hover:shadow-xl">
+                    <h3 class="text-xl font-semibold mb-1 text-center">Arambol Beach, India - Histogram</h3>
+                    <p class="text-sm text-muted text-center mb-4">This sample shows a higher concentration of coarse sand.</p>
+                    <div class="chart-container"><canvas id="grainSizeHistogramArambol"></canvas></div>
+                </div>
+                <div class="card rounded-lg shadow-md p-6 transition-all duration-300 hover:shadow-xl">
+                    <h3 class="text-xl font-semibold mb-1 text-center">Arambol Beach, India - Pie Chart</h3>
+                    <p class="text-sm text-muted text-center mb-4">Visualizing the same data as a proportional pie chart.</p>
+                    <div class="chart-container"><canvas id="grainSizePieArambol"></canvas></div>
+                </div>
+            </div>
+
+            <div class="mt-16 card rounded-lg shadow-md p-6 transition-all duration-300 hover:shadow-xl">
+                <h3 class="text-xl font-semibold mb-1 text-center">Cost Comparison: Traditional vs. SandSight</h3>
+                <p class="text-sm text-muted text-center mb-4">A simple bar chart comparing the cost of your prototype to a traditional laser diffraction system.</p>
+                <div class="chart-container"><canvas id="costComparisonChart"></canvas></div>
+            </div>
+        </section>
+
+        <section id="impact" class="tab-content mb-12">
+            <div class="text-center mb-10">
+                <h2 class="text-4xl font-bold text-primary">A Global Impact</h2>
+                <p class="mt-2 text-lg text-muted max-w-2xl mx-auto">Our system can be used by a wide range of organizations.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div class="card rounded-lg shadow-md p-6 text-center transition-all duration-300 hover:shadow-xl"><div class="text-5xl mb-4">🌊</div><h3 class="text-xl font-semibold">Coastal Management</h3><p class="text-muted">Government Coastal Management</p></div>
+                <div class="card rounded-lg shadow-md p-6 text-center transition-all duration-300 hover:shadow-xl"><div class="text-5xl mb-4">🎓</div><h3 class="text-xl font-semibold">Academic Research</h3><p class="text-muted">Universities and Research Institutes</p></div>
+                <div class="card rounded-lg shadow-md p-6 text-center transition-all duration-300 hover:shadow-xl"><div class="text-5xl mb-4">🏗️</div><h3 class="text-xl font-semibold">The Construction Industry</h3><p class="text-muted">For sand quality assessment.</p></div>
+                <div class="card rounded-lg shadow-md p-6 text-center transition-all duration-300 hover:shadow-xl"><div class="text-5xl mb-4">♻️</div><h3 class="text-xl font-semibold">Future: Microplastic Detection</h3><p class="text-muted">An exciting area for future development.</p></div>
+            </div>
+        </section>
+
+        <section id="team" class="tab-content mb-16">
+            <div class="text-center mb-10">
+                <h2 class="text-4xl font-bold text-primary">Meet the Team</h2>
+                <p class="mt-2 text-lg text-muted max-w-2xl mx-auto">The dedicated individuals behind SandSight.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-center">
+                <div class="card rounded-lg shadow-md p-6 flex flex-col items-center transition-all duration-300 hover:shadow-xl"><div class="text-5xl mb-4">👑</div><h3 class="text-xl font-semibold">Subhajit Halder</h3><p class="text-muted">Team Leader</p></div>
+                <div class="card rounded-lg shadow-md p-6 flex flex-col items-center transition-all duration-300 hover:shadow-xl"><div class="text-5xl mb-4">🧑‍🔬</div><h3 class="text-xl font-semibold">Aniket Mondal</h3><p class="text-muted">Team Member</p></div>
+                <div class="card rounded-lg shadow-md p-6 flex flex-col items-center transition-all duration-300 hover:shadow-xl"><div class="text-5xl mb-4">👩‍🔬</div><h3 class="text-xl font-semibold">Papiya Layek</h3><p class="text-muted">Team Member</p></div>
+                <div class="card rounded-lg shadow-md p-6 flex flex-col items-center transition-all duration-300 hover:shadow-xl"><div class="text-5xl mb-4">🧑‍🔬</div><h3 class="text-xl font-semibold">Tanmoy Santra</h3><p class="text-muted">Team Member</p></div>
+                <div class="card rounded-lg shadow-md p-6 flex flex-col items-center transition-all duration-300 hover:shadow-xl"><div class="text-5xl mb-4">🧑‍🔬</div><h3 class="text-xl font-semibold">Anurag Saha</h3><p class="text-muted">Team Member</p></div>
+                <div class="card rounded-lg shadow-md p-6 flex flex-col items-center transition-all duration-300 hover:shadow-xl"><div class="text-5xl mb-4">🧑‍🔬</div><h3 class="text-xl font-semibold">Ayan Karak</h3><p class="text-muted">Team Member</p></div>
+            </div>
+        </section>
+
+        <section id="contact" class="tab-content mb-16">
+            <div class="text-center mb-10">
+                <h2 class="text-4xl font-bold text-primary">Get in Touch</h2>
+                <p class="mt-2 text-lg text-muted max-w-2xl mx-auto">We'd love to hear from you!</p>
+            </div>
+            <div class="card rounded-lg shadow-md p-8 flex flex-col md:flex-row justify-around items-center gap-8 transition-all duration-300 hover:shadow-xl">
+                <div class="text-center"><div class="text-5xl mb-4">📃</div><h3 class="text-xl font-semibold">PPT</h3><p></p> <a href="https://www.canva.com/design/DAGzE4hbcqs/a_sfJS0yYM9nPkrwzkG3gg/edit">View my Canva Project</a></p></div>
+                <div class="text-center"><div class="text-5xl mb-4">✉️</div><h3 class="text-xl font-semibold">Email</h3><p class="text-muted">d4784092@gmail.com</p></div>
+                <div class="text-center"><div class="text-5xl mb-4">📞</div><h3 class="text-xl font-semibold">Phone</h3><p class="text-muted">+91 1234567896</p></div>
+                <div class="text-center"><div class="text-5xl mb-4">📱</div><h3 class="text-xl font-semibold">Social Media</h3>
+                    <div class="flex justify-center space-x-4 mt-2">
+                        <a href="#" class="text-3xl text-muted hover:text-primary"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-instagram"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg></a>
+                        <a href="#" class="text-3xl text-muted hover:text-primary"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-facebook"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg></a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    <footer class="text-center p-8">
+        <p class="text-sm">Made with ❤️ for Smart India Hackathon</p>
+    </footer>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
+
+        // Set log level for detailed Firestore debugging
+        setLogLevel('debug');
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyA0eie1jCvQDWamL7PzGwOynBzlQmkSheo",
+            authDomain: "sih-97d6b.firebaseapp.com",
+            projectId: "sih-97d6b",
+            storageBucket: "sih-97d6b.appspot.com",
+            messagingSenderId: "469033721432",
+            appId: "1:469033721432:web:83f705a333b741e8f1742d",
+            measurementId: "G-36X1B9HGTF"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+
+        const appId = 'sih-97d6b'; // Using projectId as appId for consistency
+        let db;
+        let auth;
+        let userId = '';
+        let isAuthReady = false;
+        let allAnalyses = [];
+
+        // --- UI Elements ---
+        const messageBox = document.getElementById('messageBox');
+        const messageText = document.getElementById('messageText');
+        const messageTitle = document.getElementById('messageTitle');
+        const messageClose = document.getElementById('messageClose');
+
+        function showMessage(title, text) {
+            messageTitle.textContent = title;
+            messageText.textContent = text;
+            messageBox.classList.remove('hidden');
+        }
+
+        messageClose.addEventListener('click', () => {
+            messageBox.classList.add('hidden');
+        });
+        
+        // --- Theme-Aware Chart Color Palette ---
+        function getChartColors() {
+            const computedStyles = getComputedStyle(document.body);
+            return {
+                primary: computedStyles.getPropertyValue('--primary-color').trim(),
+                accent: computedStyles.getPropertyValue('--accent-color').trim(),
+                text: computedStyles.getPropertyValue('--text-primary').trim(),
+                grid: computedStyles.getPropertyValue('--grid-color').trim(),
+                // Generate a palette from the primary color for pie charts
+                palette: [
+                    computedStyles.getPropertyValue('--primary-color').trim(),
+                    computedStyles.getPropertyValue('--accent-color').trim(),
+                    '#9ca3af',
+                    '#6b7280',
+                    '#4b5563'
+                ]
+            };
+        }
+
+        // --- Firestore Real-time Listener ---
+        async function listenForAnalyses() {
+            if (!db || !isAuthReady) {
+                console.error("Firestore is not initialized or user not authenticated.");
+                return;
+            }
+            const analysesCollectionPath = `/artifacts/${appId}/public/data/analyses`;
+            const q = query(collection(db, analysesCollectionPath));
+
+            onSnapshot(q, (querySnapshot) => {
+                const fetchedAnalyses = [];
+                querySnapshot.forEach((doc) => {
+                    fetchedAnalyses.push({ id: doc.id, ...doc.data() });
+                });
+                allAnalyses = fetchedAnalyses;
+                renderPastAnalyses();
+            }, (error) => {
+                console.error("Error listening to Firestore:", error);
+                showMessage('Firestore Error', 'Failed to fetch data. Check the console for details.');
+            });
+        }
+
+        function renderPastAnalyses() {
+            const container = document.getElementById('pastAnalysesContainer');
+            if (!container) return;
+            container.innerHTML = '';
+            if (allAnalyses.length === 0) {
+                container.innerHTML = '<p class="col-span-full text-center text-muted">No analyses found. Upload an image to start!</p>';
+                return;
+            }
+
+            allAnalyses.sort((a, b) => (b.timestamp?.toDate() || 0) - (a.timestamp?.toDate() || 0));
+
+            allAnalyses.forEach(analysis => {
+                const card = document.createElement('div');
+                card.className = 'card-alt p-4 rounded-lg shadow-md mb-4';
+                const timestamp = analysis.timestamp ? new Date(analysis.timestamp.toDate()).toLocaleString() : 'N/A';
+                card.innerHTML = `
+                    <h4 class="font-semibold text-lg mb-2">Analysis from ${timestamp}</h4>
+                    <p class="text-sm text-muted mb-2 break-all">User ID: ${analysis.userId.substring(0, 12)}...</p>
+                    <ul class="list-disc list-inside text-sm space-y-1">
+                        ${analysis.results.map(res => `<li><span class="font-bold">${res.percentage}%</span> of grains are ${res.size}</li>`).join('')}
+                    </ul>
+                `;
+                container.appendChild(card);
+            });
+        }
+        
+        // --- Gemini API Image Analysis ---
+        async function analyzeImage(base64ImageData) {
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            if (!loadingIndicator || !analyzeBtn) return;
+            
+            analyzeBtn.disabled = true;
+            analyzeBtn.classList.add('cursor-not-allowed', 'opacity-50');
+            loadingIndicator.classList.remove('hidden');
+
+            const userPrompt = "Analyze the sand in this image. Categorize the grains into these size bins: '<0.1 mm', '0.1-0.2 mm', '0.2-0.3 mm', '0.3-0.4 mm', '>0.4 mm'. Provide the results as a JSON array of objects, with each object having 'size' (string) and 'percentage' (number) keys. The sum of all percentages should be exactly 100. Be precise and realistic in your analysis. For example: `[{'size': '<0.1 mm', 'percentage': 40}, {'size': '0.1-0.2 mm', 'percentage': 30}, ...]`";
+            
+            // NOTE: Corrected model to one suitable for image understanding and structured output.
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=`;
+
+            const payload = {
+                contents: [{
+                    parts: [
+                        { text: userPrompt },
+                        { inlineData: { mimeType: "image/jpeg", data: base64ImageData } }
+                    ]
+                }],
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "ARRAY",
+                        items: {
+                            type: "OBJECT",
+                            properties: {
+                                "size": { "type": "STRING" },
+                                "percentage": { "type": "NUMBER" }
+                            },
+                            required: ["size", "percentage"]
+                        }
+                    }
+                }
+            };
+            
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const result = await response.json();
+                const jsonText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+                const parsedJson = JSON.parse(jsonText);
+                
+                if (db && userId) {
+                    const analysesCollectionPath = `/artifacts/${appId}/public/data/analyses`;
+                    await addDoc(collection(db, analysesCollectionPath), {
+                        userId: userId,
+                        results: parsedJson,
+                        timestamp: serverTimestamp()
+                    });
+                    showMessage('Analysis Complete!', 'Your sand grain analysis has been successfully saved.');
+                }
+                return parsedJson;
+
+            } catch (error) {
+                console.error("Error during image analysis:", error);
+                showMessage('Analysis Failed', 'Could not analyze the image. Please check the console and try again.');
+                return null;
+            } finally {
+                analyzeBtn.disabled = false;
+                analyzeBtn.classList.remove('cursor-not-allowed', 'opacity-50');
+                loadingIndicator.classList.add('hidden');
+            }
+        }
+
+        function getBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = error => reject(error);
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        // --- Chart Creation & Updates ---
+        const charts = {}; // To keep track of chart instances
+
+        function createOrUpdateChart(canvasId, type, data, options) {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) return;
+            if (charts[canvasId]) {
+                charts[canvasId].destroy();
+            }
+            charts[canvasId] = new Chart(ctx, { type, data, options });
+        }
+        
+        function createHistogram(canvasId, data) {
+            const colors = getChartColors();
+            createOrUpdateChart(canvasId, 'bar', {
+                labels: ['<0.1 mm', '0.1-0.2 mm', '0.2-0.3 mm', '0.3-0.4 mm', '>0.4 mm'],
+                datasets: [{ label: 'Frequency', data, backgroundColor: colors.primary, borderWidth: 0 }]
+            }, {
+                responsive: true, maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, title: { display: true, text: 'Frequency (%)', color: colors.text }, grid: { color: colors.grid }, ticks: { color: colors.text } },
+                    x: { title: { display: true, text: 'Grain Size (mm)', color: colors.text }, grid: { color: colors.grid }, ticks: { color: colors.text } }
+                },
+                plugins: { legend: { display: false } }
+            });
+        }
+
+        function createPieChart(canvasId, data, labels) {
+            const colors = getChartColors();
+            createOrUpdateChart(canvasId, 'pie', {
+                labels, datasets: [{ data, backgroundColor: colors.palette, hoverOffset: 4 }]
+            }, {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom', labels: { color: colors.text } } }
+            });
+        }
+        
+        function createCostComparisonChart(canvasId) {
+            const colors = getChartColors();
+            createOrUpdateChart(canvasId, 'bar', {
+                labels: ['SandSight', 'Traditional Lab System'],
+                datasets: [{ label: 'Cost in INR (₹)', data: [8000, 200000], backgroundColor: [colors.primary, colors.accent], borderWidth: 0 }]
+            }, {
+                responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+                scales: {
+                    x: { beginAtZero: true, ticks: { callback: value => '₹' + value.toLocaleString('en-IN'), color: colors.text }, grid: { color: colors.grid }, title: { display: true, text: 'Cost in INR (₹)', color: colors.text } },
+                    y: { grid: { color: colors.grid }, ticks: { color: colors.text } }
+                },
+                plugins: { legend: { display: false } }
+            });
+        }
+
+        function renderAllCharts() {
+            const dataLabels = ['<0.1 mm', '0.1-0.2 mm', '0.2-0.3 mm', '0.3-0.4 mm', '>0.4 mm'];
+            const goaData = [40, 30, 15, 10, 5];
+            const miamiData = [10, 20, 35, 25, 10];
+            const arambolData = [5, 15, 20, 30, 30];
+            
+            createHistogram('grainSizeHistogramGoa', goaData);
+            createPieChart('grainSizePieGoa', goaData, dataLabels);
+            createHistogram('grainSizeHistogramMiami', miamiData);
+            createPieChart('grainSizePieMiami', miamiData, dataLabels);
+            createHistogram('grainSizeHistogramArambol', arambolData);
+            createPieChart('grainSizePieArambol', arambolData, dataLabels);
+            createCostComparisonChart('costComparisonChart');
+        }
+
+        // --- Main Application Logic ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Firebase initialization and authentication
+            try {
+                db = getFirestore(app);
+                auth = getAuth(app);
+                
+                await signInAnonymously(auth);
+                
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        document.getElementById('userIdDisplay').textContent = `Your User ID: ${userId}`;
+                        isAuthReady = true;
+                        listenForAnalyses();
+                    }
+                });
+            } catch (error) {
+                console.error("Error initializing Firebase:", error);
+                showMessage('Initialization Error', 'Failed to initialize Firebase.');
+            }
+
+            // --- Event Listeners Setup ---
+            const tabs = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+            const fileInput = document.getElementById('sandImageUpload');
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            const fileUploadContainer = document.getElementById('fileUploadContainer');
+            const fileNameDisplay = document.getElementById('fileName');
+            const themeToggleBtn = document.getElementById('themeToggle');
+
+            function showTab(targetId) {
+                tabContents.forEach(c => c.classList.remove('active'));
+                tabs.forEach(t => t.classList.remove('active'));
+                document.getElementById(targetId)?.classList.add('active');
+                document.querySelector(`[data-target="${targetId}"]`)?.classList.add('active');
+                
+                if (targetId === 'data-analysis' && !charts['costComparisonChart']) {
+                    renderAllCharts();
+                }
+            }
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', (e) => showTab(e.target.dataset.target));
+            });
+
+            themeToggleBtn.addEventListener('click', () => {
+                document.body.classList.toggle('dark-mode');
+                document.body.classList.toggle('light-mode');
+                localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+                renderAllCharts(); // Re-render charts with new theme colors
+            });
+
+            // Restore theme from localStorage
+            if (localStorage.getItem('theme') === 'light') {
+                document.body.classList.remove('dark-mode');
+                document.body.classList.add('light-mode');
+            }
+            
+            // Drag and drop listeners
+            ['dragover', 'dragleave', 'drop'].forEach(eventName => {
+                fileUploadContainer.addEventListener(eventName, e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (eventName === 'dragover') fileUploadContainer.classList.add('drag-over');
+                    else fileUploadContainer.classList.remove('drag-over');
+                    if (eventName === 'drop') {
+                        const files = e.dataTransfer.files;
+                        if (files.length > 0) {
+                            fileInput.files = files;
+                            fileNameDisplay.textContent = files[0].name;
+                        }
+                    }
+                });
+            });
+
+            fileInput.addEventListener('change', () => {
+                fileNameDisplay.textContent = fileInput.files.length > 0 ? fileInput.files[0].name : '';
+            });
+
+            analyzeBtn.addEventListener('click', async () => {
+                if (fileInput.files.length === 0) {
+                    showMessage('No File Selected', 'Please select an image of sand to analyze.');
+                    return;
+                }
+                try {
+                    const base64Data = await getBase64(fileInput.files[0]);
+                    await analyzeImage(base64Data);
+                } catch (error) {
+                    showMessage('File Error', 'An error occurred while reading the image file.');
+                }
+            });
+
+            // Initial setup
+            showTab('home');
+        });
+    </script>
+</body>
+</html>
