@@ -16,7 +16,7 @@
          * Using CSS variables for theming makes the code cleaner, 
          * easier to maintain, and more efficient than numerous
          * override classes.
-        */
+         */
         :root {
             /* Light Theme Palette */
             --bg-light: linear-gradient(to bottom right, #e0e7ff, #ffffff);
@@ -149,7 +149,6 @@
         
         .tab-button.active {
             background-color: var(--primary-color);
-            color: var(--bg-gradient); /* Invert color for contrast */
             font-weight: 700;
         }
         .light-mode .tab-button.active { color: white; }
@@ -220,7 +219,6 @@
 </head>
 <body class="dark-mode">
 
-    <!-- Custom Modal/Message Box -->
     <div id="messageBox" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
         <div class="modal-content rounded-lg shadow-xl p-6 w-96 max-w-full m-4 text-center">
             <h3 id="messageTitle" class="text-2xl font-bold text-primary mb-4"></h3>
@@ -236,15 +234,15 @@
                 <h1 class="text-2xl font-bold">SandSight</h1>
             </div>
             <nav class="mt-4 md:mt-0 flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-4">
-                <ul class="flex flex-wrap justify-center text-lg font-semibold space-x-2 md:space-x-4">
-                    <li><button class="tab-button px-4 py-2 rounded-full hover:bg-primary hover:text-white transition-all duration-300" data-target="home">Home</button></li>
-                    <li><button class="tab-button px-4 py-2 rounded-full hover:bg-primary hover:text-white transition-all duration-300" data-target="problem">Problem</button></li>
-                    <li><button class="tab-button px-4 py-2 rounded-full hover:bg-primary hover:text-white transition-all duration-300" data-target="solution">Solution</button></li>
-                    <li><button class="tab-button px-4 py-2 rounded-full hover:bg-primary hover:text-white transition-all duration-300" data-target="analysis">Analysis</button></li>
-                    <li><button class="tab-button px-4 py-2 rounded-full hover:bg-primary hover:text-white transition-all duration-300" data-target="data-analysis">Sample Data</button></li>
-                    <li><button class="tab-button px-4 py-2 rounded-full hover:bg-primary hover:text-white transition-all duration-300" data-target="impact">Impact</button></li>
-                    <li><button class="tab-button px-4 py-2 rounded-full hover:bg-primary hover:text-white transition-all duration-300" data-target="team">Team</button></li>
-                    <li><button class="tab-button px-4 py-2 rounded-full hover:bg-primary hover:text-white transition-all duration-300" data-target="contact">Contact</button></li>
+                <ul class="flex flex-wrap justify-center text-lg font-semibold space-x-2 md:space-x-4" role="tablist">
+                    <li><button class="tab-button px-4 py-2 rounded-full hover:bg-primary hover:text-white transition-all duration-300" data-target="home" role="tab">Home</button></li>
+                    <li><button class="tab-button px-4 py-2 rounded-full hover:bg-primary hover:text-white transition-all duration-300" data-target="problem" role="tab">Problem</button></li>
+                    <li><button class="tab-button px-4 py-2 rounded-full hover:bg-primary hover:text-white transition-all duration-300" data-target="solution" role="tab">Solution</button></li>
+                    <li><button class="tab-button px-4 py-2 rounded-full hover:bg-primary hover:text-white transition-all duration-300" data-target="analysis" role="tab">Analysis</button></li>
+                    <li><button class="tab-button px-4 py-2 rounded-full hover:bg-primary hover:text-white transition-all duration-300" data-target="data-analysis" role="tab">Sample Data</button></li>
+                    <li><button class="tab-button px-4 py-2 rounded-full hover:bg-primary hover:text-white transition-all duration-300" data-target="impact" role="tab">Impact</button></li>
+                    <li><button class="tab-button px-4 py-2 rounded-full hover:bg-primary hover:text-white transition-all duration-300" data-target="team" role="tab">Team</button></li>
+                    <li><button class="tab-button px-4 py-2 rounded-full hover:bg-primary hover:text-white transition-all duration-300" data-target="contact" role="tab">Contact</button></li>
                 </ul>
                 <button id="themeToggle" class="bg-gray-700 text-white p-2 rounded-full transition-colors duration-300" aria-label="Toggle theme">
                     <svg id="sunIcon" class="icon sun-icon h-7 w-7" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -273,7 +271,6 @@
             </div>
         </section>
 
-        <!-- All subsequent section content cards are updated to use the .card class for theme consistency -->
         <section id="problem" class="tab-content mb-16">
             <div class="text-center mb-10">
                 <h2 class="text-4xl font-bold text-primary">The Unseen Challenge</h2>
@@ -371,7 +368,6 @@
                 </div>
             </div>
             
-            <!-- Added AI - ML Flowchart Section -->
             <div class="mt-16 card rounded-lg shadow-md p-8 transition-all duration-300 hover:shadow-xl">
                 <div class="text-center mb-10">
                     <h2 class="text-4xl font-bold text-primary">AI - ML Flowchart</h2>
@@ -409,15 +405,13 @@
                         Analyze Image ✨
                     </button>
                     <div id="loadingIndicator" class="hidden">
-                         <div></div> <!-- The spinner will be styled via CSS -->
-                    </div>
+                          <div></div> </div>
                 </div>
 
                 <div class="mt-12 w-full">
                     <h3 class="text-2xl font-bold mb-4 text-primary text-center">Past Analyses (Live Feed)</h3>
                     <div id="pastAnalysesContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <!-- Analyses will be dynamically loaded here -->
-                    </div>
+                        </div>
                 </div>
             </div>
         </section>
@@ -502,7 +496,11 @@
                 <p class="mt-2 text-lg text-muted max-w-2xl mx-auto">We'd love to hear from you!</p>
             </div>
             <div class="card rounded-lg shadow-md p-8 flex flex-col md:flex-row justify-around items-center gap-8 transition-all duration-300 hover:shadow-xl">
-                <div class="text-center"><div class="text-5xl mb-4">📃</div><h3 class="text-xl font-semibold">PPT</h3><p></p> <a href="https://www.canva.com/design/DAGzE4hbcqs/a_sfJS0yYM9nPkrwzkG3gg/edit">View my Canva Project</a></p></div>
+                <div class="text-center">
+                    <div class="text-5xl mb-4">📃</div>
+                    <h3 class="text-xl font-semibold">PPT</h3>
+                    <a href="https://www.canva.com/design/DAGzE4hbcqs/a_sfJS0yYM9nPkrwzkG3gg/edit" class="text-muted hover:text-primary">View our Canva Project</a>
+                </div>
                 <div class="text-center"><div class="text-5xl mb-4">✉️</div><h3 class="text-xl font-semibold">Email</h3><p class="text-muted">d4784092@gmail.com</p></div>
                 <div class="text-center"><div class="text-5xl mb-4">📞</div><h3 class="text-xl font-semibold">Phone</h3><p class="text-muted">+91 1234567896</p></div>
                 <div class="text-center"><div class="text-5xl mb-4">📱</div><h3 class="text-xl font-semibold">Social Media</h3>
@@ -522,18 +520,14 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
-
-        // Set log level for detailed Firestore debugging
-        setLogLevel('debug');
 
         // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyA0eie1jCvQDWamL7PzGwOynBzlQmkSheo",
             authDomain: "sih-97d6b.firebaseapp.com",
             projectId: "sih-97d6b",
-            storageBucket: "sih-97d6b.appspot.com",
+            storageBucket: "sih-97d6b.firebasestorage.app", // Corrected storage bucket
             messagingSenderId: "469033721432",
             appId: "1:469033721432:web:83f705a333b741e8f1742d",
             measurementId: "G-36X1B9HGTF"
@@ -543,7 +537,7 @@
         const app = initializeApp(firebaseConfig);
         const analytics = getAnalytics(app);
 
-        const appId = 'sih-97d6b'; // Using projectId as appId for consistency
+        const appId = firebaseConfig.projectId; // Improved: Set dynamically
         let db;
         let auth;
         let userId = '';
@@ -574,13 +568,10 @@
                 accent: computedStyles.getPropertyValue('--accent-color').trim(),
                 text: computedStyles.getPropertyValue('--text-primary').trim(),
                 grid: computedStyles.getPropertyValue('--grid-color').trim(),
-                // Generate a palette from the primary color for pie charts
                 palette: [
                     computedStyles.getPropertyValue('--primary-color').trim(),
                     computedStyles.getPropertyValue('--accent-color').trim(),
-                    '#9ca3af',
-                    '#6b7280',
-                    '#4b5563'
+                    '#9ca3af', '#6b7280', '#4b5563'
                 ]
             };
         }
@@ -645,8 +636,8 @@
 
             const userPrompt = "Analyze the sand in this image. Categorize the grains into these size bins: '<0.1 mm', '0.1-0.2 mm', '0.2-0.3 mm', '0.3-0.4 mm', '>0.4 mm'. Provide the results as a JSON array of objects, with each object having 'size' (string) and 'percentage' (number) keys. The sum of all percentages should be exactly 100. Be precise and realistic in your analysis. For example: `[{'size': '<0.1 mm', 'percentage': 40}, {'size': '0.1-0.2 mm', 'percentage': 30}, ...]`";
             
-            // NOTE: Corrected model to one suitable for image understanding and structured output.
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=`;
+            // CRITICAL BUG FIX: Appended the API key to the request URL.
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${firebaseConfig.apiKey}`;
 
             const payload = {
                 contents: [{
@@ -657,17 +648,6 @@
                 }],
                 generationConfig: {
                     responseMimeType: "application/json",
-                    responseSchema: {
-                        type: "ARRAY",
-                        items: {
-                            type: "OBJECT",
-                            properties: {
-                                "size": { "type": "STRING" },
-                                "percentage": { "type": "NUMBER" }
-                            },
-                            required: ["size", "percentage"]
-                        }
-                    }
                 }
             };
             
@@ -798,8 +778,7 @@
                     }
                 });
             } catch (error) {
-                console.error("Error initializing Firebase:", error);
-                showMessage('Initialization Error', 'Failed to initialize Firebase.');
+                console.error(error);
             }
 
             // --- Event Listeners Setup ---
