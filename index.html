@@ -523,26 +523,26 @@
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
 
         // Your web app's Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyA0eie1jCvQDWamL7PzGwOynBzlQmkSheo",
-            authDomain: "sih-97d6b.firebaseapp.com",
-            projectId: "sih-97d6b",
-            storageBucket: "sih-97d6b.firebasestorage.app", // Corrected storage bucket
-            messagingSenderId: "469033721432",
-            appId: "1:469033721432:web:83f705a333b741e8f1742d",
-            measurementId: "G-36X1B9HGTF"
-        };
+        //const firebaseConfig = {
+           // apiKey: "AIzaSyA0eie1jCvQDWamL7PzGwOynBzlQmkSheo",
+           // authDomain: "sih-97d6b.firebaseapp.com",
+           // projectId: "sih-97d6b",
+           // storageBucket: "sih-97d6b.firebasestorage.app", // Corrected storage bucket
+            //messagingSenderId: "469033721432",
+            //appId: "1:469033721432:web:83f705a333b741e8f1742d",
+            //measurementId: "G-36X1B9HGTF"
+        //};
 
         // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app);
+        // const app = initializeApp(firebaseConfig);
+        // const analytics = getAnalytics(app);
 
-        const appId = firebaseConfig.projectId; // Improved: Set dynamically
-        let db;
-        let auth;
-        let userId = '';
-        let isAuthReady = false;
-        let allAnalyses = [];
+        // const appId = firebaseConfig.projectId; // Improved: Set dynamically
+        // let db;
+        // let auth;
+        // let userId = '';
+        // let isAuthReady = false;
+        // let allAnalyses = [];
 
         // --- UI Elements ---
         const messageBox = document.getElementById('messageBox');
